@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Family Tree</title>
+		<style>
+			html, body {
+                font-family: Garamond;
+                margin: 0px;
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #fffcf9;
+            }
+            .banner {
+                overflow: hidden;
+            }
+            .column {
+                float: left;
+                break-inside: avoid;
+                margin-top: 0px;
+                margin-bottom: 0px;
+                margin-left: 30px;
+                margin-right: 30px;
+                background-color: #fffcf9;
+            }
+            .displaystub {
+                background-color: rgb(242, 239, 233);
+                box-shadow: inset 0px 0px 3px #000000;
+                clip-path: inset(0px -15px 0px 0px);
+            }
+		</style>
+	</head>
+	<body>
+        <div class="banner" style="padding:0px;margin:0px">
+            <div class="column" style="font-size:larger" >
+                <h1>Family Tree</h1>
+            </div>
+            <div class="column" id="ChooseFile">
+                <h3>Select a family spreadsheet to visualize</h3>
+                <button id="buttonFile">Open file</button>
+                <input type="file" id="file" accept=".xlsx, .xls, .xml" style="display: none;">
+            </div>
+        </div>
+        <div class="displaystub" style="padding:0px;margin:0px;border:0px"></div>
+
+		<script src="js/three.js/three.js"></script>
+        <script src="js/three.js/math/MathUtils.js"></script>
+        <script src="js/three.js/math/Quaternion.js"></script>
+        <script src="js/three.js/math/Spherical.js"></script>
+        <script src="js/three.js/math/Vector2.js"></script>
+        <script src="js/three.js/math/Vector3.js"></script>
+        <script src="js/three.js/EventDispatcher.js"></script>
+        <script src="js/three.js/OrbitControls.js"></script>
+        <script src="js/three.js/BufferGeometryUtils.js"></script>
+        <script src="js/three.js/Cache.js"></script>
+        <script src="js/three.js/Loader.js"></script>
+        <script src="js/three.js/LoadingManager.js"></script>
+        <script src="js/three.js/FileLoader.js"></script>
+        <script src="js/three.js/ShapePath.js"></script>
+        <script src="js/three.js/FontLoader.js"></script>
+        <script src="js/three.js/Curve.js"></script>
+        <script src="js/three.js/LineCurve.js"></script>
+        <script src="js/three.js/CurvePath.js"></script>
+        <script src="js/three.js/Path.js"></script>
+        <script src="js/three.js/Interpolations.js"></script>
+        <script src="js/three.js/QuadraticBezierCurve.js"></script>
+        <script src="js/three.js/Shape.js"></script>
+        <script src="js/three.js/Earcut.js"></script>
+        <script src="js/three.js/ShapeUtils.js"></script>
+        <script src="js/three.js/BufferAttribute.js"></script>
+        <script src="js/three.js/BufferGeometry.js"></script>
+        <script src="js/three.js/ExtrudeGeometry.js"></script>
+        <script src="js/three.js/TextGeometry.js"></script>
+        <script src="js/people.js"></script>
+        <script src="js/render.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/jszip.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.js"></script>
+        <script src="js/parse.js"></script>
+
+		<script>
+
+            const displaystub = document.querySelector(".displaystub");
+            let windowHeight = window.innerHeight - displaystub.offsetTop;
+            displaystub.style.width = window.innerWidth;
+            displaystub.style.height = windowHeight;
+            let camera = new THREE.PerspectiveCamera(50, window.innerWidth / windowHeight, 0.1, 1000);
+            
+			const scene = new THREE.Scene();
+            const renderer = new THREE.WebGLRenderer({antialias: true});
+			renderer.setSize(window.innerWidth, windowHeight);
+
+            function resize(event) {
+                windowHeight = window.innerHeight - displaystub.offsetTop;
+                camera.aspect = window.innerWidth / windowHeight;
+                camera.updateProjectionMatrix();
+			    renderer.setSize(window.innerWidth, windowHeight);
+            }
+            addEventListener("resize", resize);
+
+			camera.position.z = 5;
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.update();
+
+            renderer.setClearColor(0xfffcf9, 0);
+			displaystub.appendChild(renderer.domElement);
+
+            var familyTree = null;
+            var initWithTree = function(tree) {
+                let chooseFile = document.getElementById("ChooseFile");
+                chooseFile.style.display = "none";
+            };
+
+            var buttonFile = document.getElementById("buttonFile");
+            var file = document.getElementById("file");
+            buttonFile.onclick = function() {
+                document.getElementById("file").click();
+            };
+            file.onchange = function(e) {
+                if (this.files && this.files[0]) {
+                    ExcelToJSON(this.files[0], function(family) {
+                        familyTree = parseFamily(family);
+                        if (familyTree !== null) {
+                            familyTree.arrange(scene);
+                            initWithTree(familyTree);
+                        }
+                    });
+                }
+            };
+
+			function animate() {
+				requestAnimationFrame(animate);
+
+                controls.update();
+
+				renderer.render(scene, camera);
+			};
+			animate();
+
+		</script>
+	</body>
+</html>
