@@ -24,6 +24,8 @@ class RenderPerson {
         this.textMesh2 = null;
         this.group = new THREE.Group();
         this.group.position.set(position.x, position.y, position.z);
+        this.width = null;
+        this.height = null;
         
         if (globalFont !== null) {
             this.build();
@@ -92,6 +94,9 @@ class RenderPerson {
         if (this.scene !== null) {
             this.addToScene(this.scene);
         }
+
+        this.width = dims.x;
+        this.height = dims.y;
     }
 
     addToScene(scene) {
@@ -109,4 +114,43 @@ class RenderPerson {
         this.group.rotation.set(rotation);
     }
 
+    getTopConnectorLoc() {
+        return new Vector3(this.group.position.x,
+            this.group.position.y + this.height / 2,
+            this.group.position.z);
+    }
+
+    getBottomConnectorLoc() {
+        return new Vector3(this.group.position.x,
+            this.group.position.y - this.height / 2,
+            this.group.position.z);
+    }
+
 }
+
+class RenderConnectionSimple {
+    constructor(parent, child, scene) {
+        this.parent = parent;
+        this.child = child;
+        this.line = null;
+        this.rebuild(scene);
+    }
+
+    rebuild(scene) {
+        if (this.mesh !== null) {
+            scene.remove(this.mesh);
+        }
+        const mat = new THREE.LineBasicMaterial({color: 0x111111});
+        const points = [];
+        points.push(this.parent.render.getBottomConnectorLoc());
+        points.push(this.child.render.getTopConnectorLoc());
+        const geom = new BufferGeometry().setFromPoints(points);
+        this.line = new THREE.Line(geom, mat);
+        scene.add(this.line);
+    }
+
+
+}
+
+
+

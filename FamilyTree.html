@@ -46,6 +46,8 @@
         </div>
         <div class="displaystub" style="padding:0px;margin:0px;border:0px"></div>
 
+        <script src="https://unpkg.com/d3-dag@0.11.1"></script>
+
 		<script src="js/three.js/three.js"></script>
         <script src="js/three.js/math/MathUtils.js"></script>
         <script src="js/three.js/math/Quaternion.js"></script>
@@ -125,6 +127,7 @@
                         familyTree = parseFamily(family);
                         if (familyTree !== null) {
                             familyTree.arrange(scene);
+                            familyTree.connect(scene);
                             initWithTree(familyTree);
                         }
                     });

@@ -10,6 +10,7 @@ class Person {
         this.spouseName = spouseName;
         this.children = [];
         this.render = null;
+        this.generation = NaN;
         
     }
 
@@ -34,6 +35,8 @@ class Person {
     }
 }
 
+const layoutScaleX = 1.5;
+const layoutScaleY = 1;
 
 class FamilyTree {
     constructor(people) {
@@ -47,14 +50,79 @@ class FamilyTree {
         }
     }
 
-    arrange(scene) {
-        console.log(this.people);
+    findPerson(name) {
+        if (name === null) {
+            return null;
+        }
         for (let i = 0; i < this.people.length; i++) {
-            let r = new RenderPerson(this.people[i], new Vector3(i * 1.5, 0, 0));
-            this.people[i].render = r;
-            this.people[i].render.addToScene(scene);
+            if (this.people[i].name === name) {
+                return this.people[i];
+            }
+        }
+        return null;
+    }
+
+    addRenders(dag, scene, offsetX, offsetY) {
+        let person = this.findPerson(dag.data.id);
+        if (!person.render) {
+            person.render = new RenderPerson(person,
+                new Vector3(offsetX + layoutScaleX * dag.x, offsetY - layoutScaleY * dag.y, 0));
+            person.render.addToScene(scene);
+        }
+        for (let i = 0; i < dag.dataChildren.length; i++) {
+            this.addRenders(dag.dataChildren[i].child, scene, offsetX, offsetY);
+        }
+    }
+
+    arrange(scene) {
+
+        var dataArr = [];
+        for (let i = 0; i < this.people.length; i++) {
+            let _parents = [];
+            if (this.findPerson(this.people[i].parent1Name)) {
+                _parents.push(this.people[i].parent1Name);
+            }
+            if (this.findPerson(this.people[i].parent2Name)) {
+                _parents.push(this.people[i].parent2Name);
+            }
+            if (_parents.length > 0) {
+                dataArr.push({
+                    id: this.people[i].name,
+                    parentIds: _parents
+                });
+            }
+            else {
+                dataArr.push({
+                    id: this.people[i].name
+                });
+            }
+        }
+
+        const stratify = d3.dagStratify();
+        const dag = stratify(dataArr);
+        const layout = d3.sugiyama()
+            .decross(d3.decrossOpt());
+
+        const {width, height} = layout(dag);
+
+        for (let i = 0; i < dag.proots.length; i++) {
+            this.addRenders(dag.proots[i], scene,
+                (-2 - (width - 1) * layoutScaleX) / 2,
+                (2 + (height - 1) * layoutScaleY) / 2);
         }
         
+    }
+
+    connect(scene) {
+        for (let i = 0; i < this.people.length; i++) {
+            // TODO: Store the connections in the people as they're created.
+            if (this.people[i].parent1) {
+                let conn = new RenderConnectionSimple(this.people[i].parent1, this.people[i], scene);
+            }
+            if (this.people[i].parent2) {
+                let conn = new RenderConnectionSimple(this.people[i].parent2, this.people[i], scene);
+            }
+        }
     }
 
 }
